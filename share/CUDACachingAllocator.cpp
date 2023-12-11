@@ -1574,6 +1574,7 @@ class DeviceCachingAllocator {
         ++b->gc_count;
       }
     }
+    //取消流的判断--未实现 git push 测试
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end() || (*it)->stream != p.stream()){
 	    printf("stream: %p, size: %zu,alloc_size: %zu\n", (void*)p.stream(), p.size(),p.alloc_size);
