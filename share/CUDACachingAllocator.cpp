@@ -1580,9 +1580,8 @@ class DeviceCachingAllocator {
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end() || (*it)->stream != p.stream()){
-	    printf("stream: %zu, size: %zu,alloc_size: %zu\n", p.stream(), p.size(),p.alloc_size);
-      //打印当前上下文
-      printf(context_recorder_.str().c_str());
+	    printf("size: %zu,alloc_size: %zu,total alloc: %zu\n", p.size(),p.alloc_size,total_allocated_memory);
+      
       return false;
     }
     // Do not return an oversized block for a large request

@@ -1,5 +1,19 @@
 {
     "files.associations": {
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "bitset": "cpp",
+        "iomanip": "cpp",
+        "ios": "cpp",
+        "iosfwd": "cpp",
+        "istream": "cpp",
+        "iterator": "cpp",
+        "memory": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "system_error": "cpp",
+        "xiosbase": "cpp",
+        "xlocbuf": "cpp",
+        "xstring": "cpp"
     }
 }
