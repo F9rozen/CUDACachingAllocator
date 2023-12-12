@@ -836,7 +836,7 @@ class DeviceCachingAllocator {
         // Trigger callbacks and retry search
         || (trigger_free_memory_callbacks(params) && get_free_block(params))
         //
-        || get_share_blocks(params);
+        || get_share_block(params);
 
     // Can't reuse an existing block; try to get a new one.
     if (!block_found) {
@@ -1657,7 +1657,7 @@ class DeviceCachingAllocator {
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end()){
-	    printf("sharepool alloc .round size: %zu,alloc_size: %zu,total alloc: %zu\n", p.size(),p.alloc_size,total_allocated_memory);
+	    printf("sharepool alloc :round size: %zu,alloc_size: %zu,total alloc: %zu\n", p.size(),p.alloc_size,total_allocated_memory);
       
       return false;
     }
