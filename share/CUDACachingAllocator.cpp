@@ -769,6 +769,9 @@ class DeviceCachingAllocator {
         alloc_trace(new std::vector<TraceEntry>()) {
     stats.max_split_size = CachingAllocatorConfig::max_split_size();
     context_recorder_.store(nullptr);
+    //初始化的时候打印信息
+    printf("DeviceCachingAllocator initialized with %zu MB of memory\n",
+           stats.max_split_size / (1024 * 1024));
   }
 
   void recordHistory(
@@ -1574,10 +1577,12 @@ class DeviceCachingAllocator {
         ++b->gc_count;
       }
     }
-    //取消流的判断
+    //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
-    if (it == pool.blocks.end()){
-	    printf("stream: %p, size: %zu,alloc_size: %zu\n", (void*)p.stream(), p.size(),p.alloc_size);
+    if (it == pool.blocks.end() || (*it)->stream != p.stream()){
+	    printf("stream: %zu, size: %zu,alloc_size: %zu\n", p.stream(), p.size(),p.alloc_size);
+      //打印当前上下文
+      printf(context_recorder_.str().c_str());
       return false;
     }
     // Do not return an oversized block for a large request
@@ -2027,6 +2032,8 @@ class NativeCachingAllocator : public CUDAAllocator {
       device_allocator.resize(device_count);
       for (const auto i : c10::irange(size, device_count)) {
         device_allocator[i] = std::make_unique<DeviceCachingAllocator>();
+        //NativeCachingAllocator::init()
+        printf("DeviceCachingAllocator init from Native %d\n",i);
       }
     }
   }
