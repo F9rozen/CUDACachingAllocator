@@ -710,6 +710,9 @@ class DeviceCachingAllocator {
   // unallocated cached blocks 1 MB or smaller
   BlockPool small_blocks;
 
+  // unallocated cached blocks larger than 20 MB
+  BlockPool share_blocks;
+
   // allocated or in use by a stream. Holds all active allocations,
   // whether they came from graph_pools or one of the BlockPools above.
   ska::flat_hash_set<Block*> active_blocks;
@@ -766,12 +769,13 @@ class DeviceCachingAllocator {
   DeviceCachingAllocator()
       : large_blocks(BlockComparator, /*is_small=*/false),
         small_blocks(BlockComparator, /*is_small=*/true),
+        share_blocks(BlockComparator, /*is_small=*/false),
         alloc_trace(new std::vector<TraceEntry>()) {
     stats.max_split_size = CachingAllocatorConfig::max_split_size();
     context_recorder_.store(nullptr);
     //初始化的时候打印信息
-    printf("DeviceCachingAllocator initialized with %zu MB of memory\n",
-           stats.max_split_size / (1024 * 1024));
+    printf("DeviceCachingAllocator initialized\n");
+    printf(stats)
   }
 
   void recordHistory(
@@ -1081,7 +1085,10 @@ class DeviceCachingAllocator {
       } else {
         insert_events(block);
       }
-    } else {
+    } else if(orig_block_size > 20971520){
+      free_block_to_share(block);
+      printf("free block to share %zu:",orig_block_size);
+    } else{
       free_block(block);
     }
 
@@ -1399,6 +1406,70 @@ class DeviceCachingAllocator {
     blocks.insert(blocks.end(), active_blocks.begin(), active_blocks.end());
     return blocks;
   }
+
+  /**if block size > 20 mb ,free it to share pool*/
+  void free_block_to_share(Block* block) {
+    TORCH_INTERNAL_ASSERT(
+        !block->allocated && block->event_count == 0 &&
+        block->stream_uses.empty());
+    if (block->history) {
+      record_trace(
+          TraceEntry::FREE_COMPLETED,
+          int64_t(block->ptr),
+          block->history->h.real_size,
+          block->stream,
+          block->history->h.context);
+    }
+    size_t original_block_size = block->size;
+    size_t requested_size = block->requested_size;
+
+    //auto& pool = *block->pool;
+    auto& pool = share_blocks;
+    int64_t net_change_inactive_split_blocks = 0;
+    int64_t net_change_inactive_split_size = 0;
+
+//不进行merge
+/*     const std::array<Block*, 2> merge_candidates = {block->prev, block->next};
+    for (Block* merge_candidate : merge_candidates) {
+      const int64_t subsumed_size =
+          try_merge_blocks(block, merge_candidate, pool);
+      if (subsumed_size > 0) {
+        net_change_inactive_split_blocks -= 1;
+        net_change_inactive_split_size -= subsumed_size;
+      }
+    } */
+
+    active_blocks.erase(block);
+    // Makes sure the Block* isn't already present in the pool we're freeing it
+    // back into.
+    bool inserted = pool.blocks.insert(block).second;
+    TORCH_INTERNAL_ASSERT(inserted);
+
+    if (block->is_split()) {
+      net_change_inactive_split_blocks += 1;
+      net_change_inactive_split_size += block->size;
+    }
+
+    StatTypes stat_types = {false};
+    stat_types[static_cast<size_t>(StatType::AGGREGATE)] = true;
+    stat_types[static_cast<size_t>(get_stat_type_for_pool(pool))] = true;
+    for_each_selected_stat_type(stat_types, [&](size_t stat_type) {
+      update_stat(
+          stats.inactive_split[stat_type], net_change_inactive_split_blocks);
+      update_stat(
+          stats.inactive_split_bytes[stat_type],
+          net_change_inactive_split_size);
+      update_stat(stats.active[stat_type], -1);
+      update_stat(
+          stats.active_bytes[stat_type],
+          -static_cast<std::int64_t>(original_block_size));
+      update_stat(
+          stats.requested_bytes[stat_type],
+          -static_cast<std::int64_t>(requested_size));
+    });
+    printf("share pool size:\n",pool.blocks.size());
+  }
+
 
   /** moves a block into a pool of cached free blocks */
   void free_block(Block* block) {
