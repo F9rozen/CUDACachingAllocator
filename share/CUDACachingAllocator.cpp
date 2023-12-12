@@ -1656,6 +1656,10 @@ class DeviceCachingAllocator {
         ++b->gc_count;
       }
     }
+
+    //分配前洗掉block的流信息
+    p.block->stream = nullptr;
+    p.block->stream_uses.clear();
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end()){
