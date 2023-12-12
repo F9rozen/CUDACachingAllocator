@@ -1468,7 +1468,7 @@ class DeviceCachingAllocator {
           stats.requested_bytes[stat_type],
           -static_cast<std::int64_t>(requested_size));
     });
-    /printf("share pool size:%zu\n",pool.blocks.size());
+    printf("share pool size:%zu\n",pool.blocks.size());
     //std::cout<<"share pool size:"<<pool.blocks.size()<<std::endl;
   }
 
