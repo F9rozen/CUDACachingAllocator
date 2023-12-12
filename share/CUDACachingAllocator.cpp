@@ -775,7 +775,7 @@ class DeviceCachingAllocator {
     context_recorder_.store(nullptr);
     //初始化的时候打印信息
     printf("DeviceCachingAllocator initialized\n");
-    printf(stats)
+    std::cout<<stats<<std::endl;
   }
 
   void recordHistory(
@@ -1467,7 +1467,9 @@ class DeviceCachingAllocator {
           stats.requested_bytes[stat_type],
           -static_cast<std::int64_t>(requested_size));
     });
-    printf("share pool size:\n",pool.blocks.size());
+    //打印失败
+    //printf("share pool size:\n",pool.blocks.size());
+    std::cout<<"share pool size:"<<pool.blocks.size()<<std::endl;
   }
 
 
