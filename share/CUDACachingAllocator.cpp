@@ -1427,9 +1427,10 @@ class DeviceCachingAllocator {
     size_t original_block_size = block->size;
     size_t requested_size = block->requested_size;
     //洗掉block的stream信息
-    block->stream = nullptr;
-    block->stream_uses.clear();
+    /* block->stream = nullptr;
+    block->stream_uses.clear(); */
     //auto& pool = *block->pool;
+    //循环转换share pool中block的stream信息--待实现
     auto& pool = share_blocks;
     int64_t net_change_inactive_split_blocks = 0;
     int64_t net_change_inactive_split_size = 0;
@@ -1657,9 +1658,9 @@ class DeviceCachingAllocator {
       }
     }
 
-    //分配前洗掉block的流信息
+    /* //分配前洗掉block的流信息
     p.block->stream = nullptr;
-    p.block->stream_uses.clear();
+    p.block->stream_uses.clear(); */
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end()){
