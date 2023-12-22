@@ -714,6 +714,9 @@ class DeviceCachingAllocator {
   // unallocated cached blocks larger than 20 MB
   BlockPool share_blocks;
 
+  //cudaStream_t list, record all streams that have been used
+  std::list<cudaStream_t> stream_list;
+
   // allocated or in use by a stream. Holds all active allocations,
   // whether they came from graph_pools or one of the BlockPools above.
   ska::flat_hash_set<Block*> active_blocks;
@@ -846,6 +849,13 @@ class DeviceCachingAllocator {
               CachingAllocatorConfig::garbage_collection_threshold() > 0.0)) {
         garbage_collect_cached_blocks();
       }
+      //要确保list中的元素唯一性
+      //添加当前的流到stream_list中
+      std::list<cudcudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),stream);
+      if(it == stream_list.end()){
+        stream_list.push_back(stream);
+      }
+      
       // Attempt allocate
       block_found = alloc_block(params, false)
           // Free enough available cached blocks to satisfy alloc and retry
@@ -1089,7 +1099,7 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(orig_block_size > 20971520){
+    } else if(stream_set.size() > 3 && orig_block_size > 20971520){
       free_block_to_share(block);
       printf("free block to share %zu\n",orig_block_size);
     } else{
@@ -1413,6 +1423,16 @@ class DeviceCachingAllocator {
 
   /**if block size > 20 mb ,free it to share pool*/
   void free_block_to_share(Block* block) {
+    //修改block的stream信息
+    std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
+    //这个判断条件多余？一定能找到对应的stream
+    if(it != stream_list.end()){
+      cudaStream_t nextStream = std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
+    }else{
+      printf("can't find stream in stream_list\n");
+    }
+    block->stream = nextStream;
+    printf("change Stream pointer from：%p to %p\n", block->stream_uses , nextStream);
     TORCH_INTERNAL_ASSERT(
         !block->allocated && block->event_count == 0 &&
         block->stream_uses.empty());
@@ -1426,11 +1446,6 @@ class DeviceCachingAllocator {
     }
     size_t original_block_size = block->size;
     size_t requested_size = block->requested_size;
-    //洗掉block的stream信息
-    /* block->stream = nullptr;
-    block->stream_uses.clear(); */
-    //auto& pool = *block->pool;
-    //循环转换share pool中block的stream信息--待实现
     auto& pool = share_blocks;
     int64_t net_change_inactive_split_blocks = 0;
     int64_t net_change_inactive_split_size = 0;
@@ -1474,7 +1489,7 @@ class DeviceCachingAllocator {
           stats.requested_bytes[stat_type],
           -static_cast<std::int64_t>(requested_size));
     });
-    printf("share pool size:%zu\n",pool.blocks.size());
+    printf("free to share pool size:%zu\n",pool.blocks.size());
     //std::cout<<"share pool size:"<<pool.blocks.size()<<std::endl;
   }
 
@@ -1663,7 +1678,7 @@ class DeviceCachingAllocator {
     p.block->stream_uses.clear(); */
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
-    if (it == pool.blocks.end()){
+    if (it == pool.blocks.end()|| (*it)->stream != p.stream()){
 	    printf("sharepool alloc err:alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
       
       return false;
