@@ -1424,12 +1424,13 @@ class DeviceCachingAllocator {
 
   /**if block size > 20 mb ,free it to share pool*/
   void free_block_to_share(Block* block) {
+    cudaStream_t nextStream;
     //修改block的stream信息
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
     //这个判断条件多余？一定能找到对应的stream
     if(it != stream_list.end()){
       std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
-      cudaStream_t nextStream = *it;
+      nextStream = *it;
     }else{
       printf("can't find stream in stream_list\n");
     }
