@@ -1100,7 +1100,7 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_set.size() > 3 && orig_block_size > 20971520){
+    } else if(stream_list.size() > 3 && orig_block_size > 20971520){
       free_block_to_share(block);
       printf("free block to share %zu\n",orig_block_size);
     } else{
@@ -1428,7 +1428,8 @@ class DeviceCachingAllocator {
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
     //这个判断条件多余？一定能找到对应的stream
     if(it != stream_list.end()){
-      cudaStream_t nextStream = std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
+      std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
+      cudaStream_t nextStream = *it;
     }else{
       printf("can't find stream in stream_list\n");
     }
