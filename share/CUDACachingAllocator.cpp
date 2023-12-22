@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <list>
 
 namespace c10 {
 
@@ -851,7 +852,7 @@ class DeviceCachingAllocator {
       }
       //要确保list中的元素唯一性
       //添加当前的流到stream_list中
-      std::list<cudcudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),stream);
+      std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),stream);
       if(it == stream_list.end()){
         stream_list.push_back(stream);
       }
