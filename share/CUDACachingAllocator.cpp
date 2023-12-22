@@ -855,6 +855,7 @@ class DeviceCachingAllocator {
       std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),stream);
       if(it == stream_list.end()){
         stream_list.push_back(stream);
+        printf("stream_list size: %zu\n", stream_list.size());
       }
       
       // Attempt allocate
