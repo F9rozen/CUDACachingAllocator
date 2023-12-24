@@ -855,7 +855,7 @@ class DeviceCachingAllocator {
       std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),stream);
       if(it == stream_list.end()){
         stream_list.push_back(stream);
-        printf("stream_list size: %zu\n", stream_list.size());
+        printf("stream:%p,stream_list size: %zu\n",stream, stream_list.size());
       }
       
       // Attempt allocate
@@ -1465,9 +1465,13 @@ class DeviceCachingAllocator {
     printf("Stream pointer before: %p\n", *it);
     //这个判断条件多余？一定能找到对应的stream
     if(it != stream_list.end()){
-      std::next(it) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it);
-      nextStream = *it;
-      printf("Stream pointer after: %p\n", *nextStream);
+      //std::next(it) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it);
+      if(std::next(it) == stream_list.end()){
+        nextStream = *std::next(stream_list.begin());
+      }else{
+        nextStream = *std::next(it);
+        printf("Stream pointer after: %p\n", nextStream);
+      }
     }else{
       printf("can't find stream in stream_list\n");
     }
