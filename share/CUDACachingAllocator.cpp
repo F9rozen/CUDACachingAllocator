@@ -1425,18 +1425,6 @@ class DeviceCachingAllocator {
 
   /**if block size > 20 mb ,free it to share pool*/
   void free_block_to_share(Block* block) {
-    cudaStream_t nextStream;
-    //修改block的stream信息
-    std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
-    //这个判断条件多余？一定能找到对应的stream
-    if(it != stream_list.end()){
-      std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
-      nextStream = *it;
-    }else{
-      printf("can't find stream in stream_list\n");
-    }
-    block->stream = nextStream;
-    printf("change Stream pointer from：%p to %p\n", block->stream_uses , nextStream);
     TORCH_INTERNAL_ASSERT(
         !block->allocated && block->event_count == 0 &&
         block->stream_uses.empty());
@@ -1450,12 +1438,13 @@ class DeviceCachingAllocator {
     }
     size_t original_block_size = block->size;
     size_t requested_size = block->requested_size;
-    auto& pool = share_blocks;
+    //第一次放进sharepool的时候先尝试从原来的pool中merge
+    auto& pool = *block->pool;
+    //auto& pool = share_blocks;
     int64_t net_change_inactive_split_blocks = 0;
     int64_t net_change_inactive_split_size = 0;
 
-//不进行merge
-/*     const std::array<Block*, 2> merge_candidates = {block->prev, block->next};
+    const std::array<Block*, 2> merge_candidates = {block->prev, block->next};
     for (Block* merge_candidate : merge_candidates) {
       const int64_t subsumed_size =
           try_merge_blocks(block, merge_candidate, pool);
@@ -1463,11 +1452,26 @@ class DeviceCachingAllocator {
         net_change_inactive_split_blocks -= 1;
         net_change_inactive_split_size -= subsumed_size;
       }
-    } */
+    } 
 
     active_blocks.erase(block);
     // Makes sure the Block* isn't already present in the pool we're freeing it
     // back into.
+    //merge之后再插入share pool 并且删除原来的pool中的block
+    auto& pool = share_blocks;
+    cudaStream_t nextStream;
+    //修改block的stream信息
+    std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
+    //这个判断条件多余？一定能找到对应的stream
+    if(it != stream_list.end()){
+      std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
+      nextStream = *it;
+    }else{
+      printf("can't find stream in stream_list\n");
+    }
+    block->stream = nextStream;
+    printf("change Stream pointer from：%p to %p\n", block->stream_uses , nextStream);
+
     bool inserted = pool.blocks.insert(block).second;
     TORCH_INTERNAL_ASSERT(inserted);
 
