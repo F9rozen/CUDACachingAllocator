@@ -1462,15 +1462,17 @@ class DeviceCachingAllocator {
     cudaStream_t nextStream;
     //修改block的stream信息
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
+    printf("Stream pointer before: %p\n", *it);
     //这个判断条件多余？一定能找到对应的stream
     if(it != stream_list.end()){
-      std::next(it,1) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it,1);
+      std::next(it) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it);
       nextStream = *it;
+      printf("Stream pointer after: %p\n", *nextStream);
     }else{
       printf("can't find stream in stream_list\n");
     }
     block->stream = nextStream;
-    printf("change Stream pointer");
+    printf("change Stream pointer\n");
 
     bool inserted = pool.blocks.insert(block).second;
     TORCH_INTERNAL_ASSERT(inserted);
