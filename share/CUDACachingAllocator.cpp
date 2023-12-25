@@ -1101,7 +1101,7 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 3 && orig_block_size > 20971520){
+    } else if(stream_list.size() > 4 && orig_block_size > 20971520){
       free_block_to_share(block);
       printf("free block to share %zu\n",orig_block_size);
     } else{
