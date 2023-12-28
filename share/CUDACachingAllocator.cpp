@@ -1101,9 +1101,9 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 4 && orig_block_size > 20971520){
+    } else if(stream_list.size() > 2: && orig_block_size > 20971520){
       free_block_to_share(block);
-      printf("free block to share %zu\n",orig_block_size);
+      printf("stream:%p free block to share %zu\n",block->stream,orig_block_size);
     } else{
       free_block(block);
     }
@@ -1466,12 +1466,23 @@ class DeviceCachingAllocator {
     //这个判断条件多余？一定能找到对应的stream
     if(it != stream_list.end()){
       //std::next(it) == stream_list.end() ? std::next(stream_list.begin()) : std::next(it);
-      if(std::next(it) == stream_list.end()){
-        nextStream = *std::next(stream_list.begin());
+      if (it == stream_list.begin())
+      {
+        printf("Stream error\n");
+        printf("begin : %p,end: %p\n", *stream_list.begin(),*stream_list.end());
+      }else if (it == std::prev(stream_list.end()))
+      {
+        nextStream = *std::next(stream_list.begin()):;
       }else{
         nextStream = *std::next(it);
-        printf("Stream pointer after: %p\n", nextStream);
       }
+      printf("Stream pointer after: %p\n", nextStream);
+      // if(std::prev(it) == stream_list.begin()){
+      //   nextStream = *stream_list.end();
+      // }else{
+      //   nextStream = *std::prev(it);
+      //   printf("Stream pointer after: %p\n", nextStream);
+      // }
     }else{
       printf("can't find stream in stream_list\n");
     }
