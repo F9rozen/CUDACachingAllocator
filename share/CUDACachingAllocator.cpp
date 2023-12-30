@@ -1101,7 +1101,7 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 2: && orig_block_size > 20971520){
+    } else if(stream_list.size() > 2: && orig_block_size > 31457280){
       free_block_to_share(block);
       printf("stream:%p free block to share %zu\n",block->stream,orig_block_size);
     } else{
@@ -1514,7 +1514,7 @@ class DeviceCachingAllocator {
           stats.requested_bytes[stat_type],
           -static_cast<std::int64_t>(requested_size));
     });
-    printf("free to share pool size:%zu\n",pool.blocks.size());
+    printf("free to share pool size:%zu MB\n",pool.blocks.size()/1024/1024);
     //std::cout<<"share pool size:"<<pool.blocks.size()<<std::endl;
   }
 
