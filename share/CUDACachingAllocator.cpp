@@ -1103,7 +1103,7 @@ class DeviceCachingAllocator {
       //大于20MB的block，释放到share_blocks
     } else if(stream_list.size() > 2: && orig_block_size > 31457280){
       free_block_to_share(block);
-      printf("stream:%p free block to share %zu\n",block->stream,orig_block_size);
+      printf("stream:%p free block to share %.0f\n",block->stream,orig_block_size/1024/1024.0);
     } else{
       free_block(block);
     }
@@ -1719,7 +1719,7 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-    printf("get block from share pool %.2f \n",p.size()/1024/1024.0);
+    printf("get block from share pool %.0f \n",p.size()/1024/1024.0);
     return true;
   }
 
