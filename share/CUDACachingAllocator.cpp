@@ -1514,7 +1514,7 @@ class DeviceCachingAllocator {
           stats.requested_bytes[stat_type],
           -static_cast<std::int64_t>(requested_size));
     });
-    printf("free to share pool size:%zu MB\n",pool.blocks.size()/1024/1024);
+    printf("free to share pool size:%zu MB\n",pool.blocks.size());
     //std::cout<<"share pool size:"<<pool.blocks.size()<<std::endl;
   }
 
@@ -1704,7 +1704,7 @@ class DeviceCachingAllocator {
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end()|| (*it)->stream != p.stream()){
-	    printf("sharepool alloc err:alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
+	    //printf("sharepool alloc err:alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
       
       return false;
     }
@@ -1719,7 +1719,7 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-    printf("get block from share pool %zu\n",p.size());
+    printf("get block from share pool %.2f \n",p.size()/1024/1024.0);
     return true;
   }
 
@@ -1737,7 +1737,7 @@ class DeviceCachingAllocator {
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end() || (*it)->stream != p.stream()){
-	    printf("pool alloc err: alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
+	    //printf("pool alloc err: alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
       return false;
     }
     // Do not return an oversized block for a large request
