@@ -1448,6 +1448,7 @@ class DeviceCachingAllocator {
     for (Block* merge_candidate : merge_candidates) {
       const int64_t subsumed_size =
           try_merge_blocks(block, merge_candidate, pool);
+          printf("merge block: %p with %p ,size from %zu to subsumed_size:%zu\n",block->ptr,merge_candidate->ptr,block->size,subsumed_size);
       if (subsumed_size > 0) {
         net_change_inactive_split_blocks -= 1;
         net_change_inactive_split_size -= subsumed_size;
@@ -1458,7 +1459,7 @@ class DeviceCachingAllocator {
     // Makes sure the Block* isn't already present in the pool we're freeing it
     // back into.
     //merge之后再插入share pool 并且删除原来的pool中的block
-    //auto& pool = share_blocks;
+    auto& pool = share_blocks;
     cudaStream_t nextStream;
     //修改block的stream信息
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
