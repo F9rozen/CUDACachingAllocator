@@ -1458,7 +1458,7 @@ class DeviceCachingAllocator {
     // Makes sure the Block* isn't already present in the pool we're freeing it
     // back into.
     //merge之后再插入share pool 并且删除原来的pool中的block
-    auto& pool = share_blocks;
+    //auto& pool = share_blocks;
     cudaStream_t nextStream;
     //修改block的stream信息
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
