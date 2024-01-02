@@ -980,6 +980,7 @@ class DeviceCachingAllocator {
       remaining->size -= size;
       bool inserted = pool.blocks.insert(remaining).second;
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(inserted);
+      printf("split block from pool:%p,size %.0f M + %.0f M\n",&pool,remaining->size/1024/1024.0,block->size/1024/1024.0);
 
       if (record_history) {
         trimHistoryBefore(remaining, (char*)block->ptr + size);
@@ -1101,9 +1102,9 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 2: && orig_block_size > 31457280){
+    } else if(stream_list.size() > 2 && orig_block_size > 31457280){
       free_block_to_share(block);
-      printf("stream:%p free block to share %.0f M\n",block->stream,orig_block_size/1024/1024.0);
+      printf(" free block %.0f M to stream:%p\n",orig_block_size/1024/1024.0,block->stream);
     } else{
       free_block(block);
     }
@@ -1447,7 +1448,7 @@ class DeviceCachingAllocator {
     const std::array<Block*, 2> merge_candidates = {block->prev, block->next};
     for (Block* merge_candidate : merge_candidates) {
       const int64_t subsumed_size =
-          try_merge_blocks(block, merge_candidate, pool);
+          try_merge_blocks(block, merge_candidate, lpool);
           printf("merge block: %p with %p ,size from %zu to subsumed_size:%zu\n",block->ptr,merge_candidate->ptr,block->size,subsumed_size);
       if (subsumed_size > 0) {
         net_change_inactive_split_blocks -= 1;
