@@ -780,6 +780,7 @@ class DeviceCachingAllocator {
     context_recorder_.store(nullptr);
     //初始化的时候打印信息
     printf("DeviceCachingAllocator initialized\n");
+    printf("pool large：%p,small:%p,share:%p\n", &large_blocks, &small_blocks, &share_blocks);
     //std::cout<<stats<<std::endl;
   }
 
@@ -980,7 +981,7 @@ class DeviceCachingAllocator {
       remaining->size -= size;
       bool inserted = pool.blocks.insert(remaining).second;
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(inserted);
-
+      printf("split block from pool:%p,remain size %.0f M + %.0f M\n",&pool,remaining->size/1024/1024.0,block->size/1024/1024.0);
       if (record_history) {
         trimHistoryBefore(remaining, (char*)block->ptr + size);
       }
@@ -1719,7 +1720,7 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-    printf("get block from share pool %.0f \n",p.size()/1024/1024.0);
+    printf("  get block from share pool %.0f \n",p.size()/1024/1024.0);
     return true;
   }
 
