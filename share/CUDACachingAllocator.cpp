@@ -1439,7 +1439,7 @@ class DeviceCachingAllocator {
     size_t original_block_size = block->size;
     size_t requested_size = block->requested_size;
     //第一次放进sharepool的时候先尝试从原来的pool中merge
-    auto& lpool = *block->pool;
+    auto& pool = *block->pool;
     //auto& pool = share_blocks;
     int64_t net_change_inactive_split_blocks = 0;
     int64_t net_change_inactive_split_size = 0;
@@ -1447,7 +1447,7 @@ class DeviceCachingAllocator {
     const std::array<Block*, 2> merge_candidates = {block->prev, block->next};
     for (Block* merge_candidate : merge_candidates) {
       const int64_t subsumed_size =
-          try_merge_blocks(block, merge_candidate, lpool);
+          try_merge_blocks(block, merge_candidate, pool);
       if (subsumed_size > 0) {
         net_change_inactive_split_blocks -= 1;
         net_change_inactive_split_size -= subsumed_size;
