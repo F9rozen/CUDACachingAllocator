@@ -1708,7 +1708,7 @@ class DeviceCachingAllocator {
 	    printf("sharepool alloc err:alloc_size: %zu,pool size:%zu\n",p.alloc_size,p.blcoks,size());
       //释放未在使用的块？
       for (auto it = pool.blocks.begin(); it != pool.blocks.end(); ) {
-        if ((*it)->gc_count > 2) { // Replace this condition with your own
+        if (!(*it)->allocated) { // Replace this condition with your own
             delete *it;
             it = pool.blocks.erase(it);
             } else {
