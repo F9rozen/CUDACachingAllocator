@@ -980,7 +980,6 @@ class DeviceCachingAllocator {
       remaining->size -= size;
       bool inserted = pool.blocks.insert(remaining).second;
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(inserted);
-      printf("split block from pool:%p,size %.0f M + %.0f M\n",&pool,remaining->size/1024/1024.0,block->size/1024/1024.0);
 
       if (record_history) {
         trimHistoryBefore(remaining, (char*)block->ptr + size);
@@ -1102,9 +1101,9 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 2 && orig_block_size > 31457280){
+    } else if(stream_list.size() > 2: && orig_block_size > 31457280){
       free_block_to_share(block);
-      printf(" free block %.0f M to stream:%p\n",orig_block_size/1024/1024.0,block->stream);
+      printf("stream:%p free block to share %.0f M\n",block->stream,orig_block_size/1024/1024.0);
     } else{
       free_block(block);
     }
@@ -1441,7 +1440,7 @@ class DeviceCachingAllocator {
     size_t requested_size = block->requested_size;
     //第一次放进sharepool的时候先尝试从原来的pool中merge
     auto& lpool = *block->pool;
-    auto& pool = share_blocks;
+    //auto& pool = share_blocks;
     int64_t net_change_inactive_split_blocks = 0;
     int64_t net_change_inactive_split_size = 0;
 
@@ -1449,7 +1448,6 @@ class DeviceCachingAllocator {
     for (Block* merge_candidate : merge_candidates) {
       const int64_t subsumed_size =
           try_merge_blocks(block, merge_candidate, lpool);
-          printf("merge block: %p with %p ,size from %zu to subsumed_size:%zu\n",block->ptr,merge_candidate->ptr,block->size,subsumed_size);
       if (subsumed_size > 0) {
         net_change_inactive_split_blocks -= 1;
         net_change_inactive_split_size -= subsumed_size;
@@ -1460,7 +1458,7 @@ class DeviceCachingAllocator {
     // Makes sure the Block* isn't already present in the pool we're freeing it
     // back into.
     //merge之后再插入share pool 并且删除原来的pool中的block
-    //auto& pool = share_blocks;
+    auto& pool = share_blocks;
     cudaStream_t nextStream;
     //修改block的stream信息
     std::list<cudaStream_t>::iterator it = std::find(stream_list.begin(),stream_list.end(),block->stream);
