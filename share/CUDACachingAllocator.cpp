@@ -1705,7 +1705,7 @@ class DeviceCachingAllocator {
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
     if (it == pool.blocks.end()|| (*it)->stream != p.stream()){
-	    printf("sharepool alloc err:alloc_size: %zu,pool size:%zu\n",p.alloc_size,p.blcoks,size());
+	/*     printf("sharepool alloc err:alloc_size: %zu,pool size:%zu\n",p.alloc_size,p.blcoks,size());
       //释放未在使用的块？
     for (auto it = pool.blocks.begin(); it != pool.blocks.end(); ) {
         if ((*it)->gc_count > 10) { // Replace this condition with your own
@@ -1715,7 +1715,7 @@ class DeviceCachingAllocator {
             ++it;
             }
         }
-        printf("share pool size:%zu \n",pool.blocks.size());
+        printf("share pool size:%zu \n",pool.blocks.size()); */
       return false;
     }
     // Do not return an oversized block for a large request
@@ -1729,7 +1729,7 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-    printf("  get block from share pool %.0f \n",p.size()/1024/1024.0);
+    printf("  stream %p get block from share pool %.0f \n",p.stream(), p.size()/1024/1024.0);
     //添加GC
     for (auto& b : pool.blocks) {
         ++b->gc_count;
