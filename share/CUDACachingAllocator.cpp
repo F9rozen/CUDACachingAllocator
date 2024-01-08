@@ -1704,6 +1704,7 @@ class DeviceCachingAllocator {
     p.block->stream_uses.clear(); */
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
+    //再次尝试在共享池中取消流的判断
     if (it == pool.blocks.end()|| (*it)->stream != p.stream()){
 	/*     printf("sharepool alloc err:alloc_size: %zu,pool size:%zu\n",p.alloc_size,p.blcoks,size());
       //释放未在使用的块？
