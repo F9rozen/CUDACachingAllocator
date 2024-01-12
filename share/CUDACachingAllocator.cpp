@@ -780,7 +780,6 @@ class DeviceCachingAllocator {
     context_recorder_.store(nullptr);
     //初始化的时候打印信息
     printf("DeviceCachingAllocator initialized\n");
-    printf("pool large：%p,small:%p,share:%p\n", &large_blocks, &small_blocks, &share_blocks);
     //std::cout<<stats<<std::endl;
   }
 
@@ -841,7 +840,7 @@ class DeviceCachingAllocator {
         // Trigger callbacks and retry search
         || (trigger_free_memory_callbacks(params) && get_free_block(params))
         //
-        || (params.size() > 41943040 && get_share_block(params));
+        || (params.size() > 31457280 && get_share_block(params));
 
     // Can't reuse an existing block; try to get a new one.
     if (!block_found) {
@@ -981,7 +980,7 @@ class DeviceCachingAllocator {
       remaining->size -= size;
       bool inserted = pool.blocks.insert(remaining).second;
       TORCH_INTERNAL_ASSERT_DEBUG_ONLY(inserted);
-      printf("split block from pool:%p,remain size %.0f M + %.0f M\n",&pool,remaining->size/1024/1024.0,block->size/1024/1024.0);
+
       if (record_history) {
         trimHistoryBefore(remaining, (char*)block->ptr + size);
       }
@@ -1102,7 +1101,7 @@ class DeviceCachingAllocator {
         insert_events(block);
       }
       //大于20MB的block，释放到share_blocks
-    } else if(stream_list.size() > 2 && orig_block_size > 41943040){
+    } else if(stream_list.size() > 2 && orig_block_size > 31457280){
       free_block_to_share(block);
       printf("stream:%p free block to share %.0f M\n",block->stream,orig_block_size/1024/1024.0);
     } else{
@@ -1704,19 +1703,9 @@ class DeviceCachingAllocator {
     p.block->stream_uses.clear(); */
     //取消流的判断--张量操作报错
     auto it = pool.blocks.lower_bound(&p.search_key);
-    //再次尝试在共享池中取消流的判断
-    if (it == pool.blocks.end()|| (*it)->stream != p.stream()){
-	/*     printf("sharepool alloc err:alloc_size: %zu,pool size:%zu\n",p.alloc_size,p.blcoks,size());
-      //释放未在使用的块？
-    for (auto it = pool.blocks.begin(); it != pool.blocks.end(); ) {
-        if ((*it)->gc_count > 10) { // Replace this condition with your own
-            pool.blocks.erase(it);
-            release_block(*it);
-            } else {
-            ++it;
-            }
-        }
-        printf("share pool size:%zu \n",pool.blocks.size()); */
+    if (it == pool.blocks.end()|| (*it)->stream != p.stream()){：
+	    //printf("sharepool alloc err:alloc_size: %zu,total alloc: %zu\n",p.alloc_size,total_allocated_memory);
+      
       return false;
     }
     // Do not return an oversized block for a large request
@@ -1730,11 +1719,7 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-    printf("  stream %p get block from share pool %.0f \n",p.stream(), p.size()/1024/1024.0);
-    //添加GC
-    for (auto& b : pool.blocks) {
-        ++b->gc_count;
-    }
+    printf("get block from share pool %.0f \n",p.size()/1024/1024.0);
     return true;
   }
 
@@ -1766,7 +1751,6 @@ class DeviceCachingAllocator {
     p.block = *it;
     (*it)->gc_count = 0; // Denote this block has been used
     pool.blocks.erase(it);
-
     return true;
   }
 
